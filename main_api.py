@@ -6,7 +6,7 @@ os.environ["QT_QPA_PLATFORM"] = "offscreen"
 os.environ["XDG_RUNTIME_DIR"] = "/tmp/runtime-root"
 from fastapi import FastAPI, File, UploadFile, Form
 from fastapi.responses import JSONResponse
-import cv2
+#import cv2
 from datetime import datetime
 from absen_engine import AbsenEngine, get_db_connection
 
