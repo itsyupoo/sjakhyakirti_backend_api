@@ -1,3 +1,6 @@
+import os
+os.environ["QT_QPA_PLATFORM"] = "offscreen"
+os.environ["XDG_RUNTIME_DIR"] = "/tmp/runtime-root"
 import cv2
 import numpy as np
 import json
