@@ -1,5 +1,6 @@
 {
   "build": {
-    "builder": "NIXPACKS"
+    "builder": "NIXPACKS",
+    "aptPackages": ["libxcb1", "libgl1"]
   }
 }
