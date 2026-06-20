@@ -157,6 +157,8 @@ async def input_siswa_baru(
         daftar_frame = []
         for file in files:
             img = await upload_to_cv2(file)
+            if img is not None:
+                img = cv2.resize(img, (1024, 1024))
             if img is None:
                 return JSONResponse(
                     status_code=400,
