@@ -78,7 +78,7 @@ class AbsenEngine:
                         self.known_names.append(nama)
                         self.known_embeddings.append(emb_np)
                 except Exception as e:
-                    pass
+                    print(f"Embedding error: {e}")
             
             if len(self.known_embeddings) > 0:
                 self.known_embeddings = np.array(self.known_embeddings).astype('float32')
@@ -176,9 +176,12 @@ class AbsenEngine:
         """
         if len(daftar_frame) < 5:
             return False, None
+
         all_embeddings = []
+
         try:
             for frame in daftar_frame:
+
                 results = DeepFace.represent(
                     img_path=frame,
                     model_name=MODEL_NAME,
@@ -186,18 +189,31 @@ class AbsenEngine:
                     enforce_detection=True,
                     align=True
                 )
+
                 if len(results) == 0:
-                    all_embeddings.append(results[0]["embedding"])
+                    continue
+
+                # Ambil embedding wajah
                 embedding = results[0]["embedding"]
+
+                # Simpan ke list untuk dihitung centroid
                 all_embeddings.append(embedding)
+
             # Minimal 5 wajah berhasil diekstrak
             if len(all_embeddings) < 5:
                 return False, None
+
             centroid = np.mean(
                 np.array(all_embeddings),
                 axis=0
             )
+
             return True, centroid.tolist()
+
+        except Exception as e:
+            print(f"❌ API ENGINE: Gagal membuat centroid: {e}")
+            return False, None
+        
         except Exception as e:
             print(f"❌ API ENGINE: Gagal membuat centroid: {e}")
             return False, None    

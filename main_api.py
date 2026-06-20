@@ -1,19 +1,62 @@
-from fastapi import FastAPI, File, UploadFile, Form
-from fastapi.responses import JSONResponse
 import numpy as np
 import os
-os.environ["QT_QPA_PLATFORM"] = "offscreen"
-os.environ["XDG_RUNTIME_DIR"] = "/tmp/runtime-root"
+import json
+import cv2
 from fastapi import FastAPI, File, UploadFile, Form
 from fastapi.responses import JSONResponse
-import cv2
+os.environ["QT_QPA_PLATFORM"] = "offscreen"
+os.environ["XDG_RUNTIME_DIR"] = "/tmp/runtime-root"
 from datetime import datetime
 from absen_engine import AbsenEngine, get_db_connection
 
 app = FastAPI(title="API Presensi cloud SMA Sjakhyakirti")
 engine = AbsenEngine()
+LAT_SEKOLAH = -2.9463
+LON_SEKOLAH = 104.7571
+RADIUS_MAKSIMAL = 50.0
 os.makedirs("hasil_presensi", exist_ok=True)
 
+def hitung_jarak(latitude, longitude):
+    R = 6371000
+
+    phi1 = np.radians(latitude)
+    phi2 = np.radians(LAT_SEKOLAH)
+
+    delta_phi = np.radians(
+        LAT_SEKOLAH - latitude
+    )
+
+    delta_lambda = np.radians(
+        LON_SEKOLAH - longitude
+    )
+
+    a = (
+        np.sin(delta_phi / 2) ** 2
+        + np.cos(phi1)
+        * np.cos(phi2)
+        * np.sin(delta_lambda / 2) ** 2
+    )
+
+    c = 2 * np.arctan2(
+        np.sqrt(a),
+        np.sqrt(1 - a)
+    )
+
+    return round(R * c, 2)
+
+async def upload_to_cv2(file: UploadFile):
+
+    contents = await file.read()
+
+    nparr = np.frombuffer(
+        contents,
+        np.uint8
+    )
+
+    return cv2.imdecode(
+        nparr,
+        cv2.IMREAD_COLOR
+    )
 #----HALAMAN UTAMA---
 @app.get("/")
 def home():
@@ -30,9 +73,7 @@ async def verify_presensi(
 ):
     try:
         # 1. Konversi file gambar kiriman HP Android ke OpenCV Frame
-        contents = await file.read()
-        nparr = np.frombuffer(contents, np.uint8)
-        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        img = await upload_to_cv2(file)
         
         if img is None:
             return JSONResponse(status_code=400, content={"status": "gagal", "message": "File gambar selfie tidak valid."})
@@ -50,22 +91,12 @@ async def verify_presensi(
             else:
                 return JSONResponse(status_code=400, content={"status": "gagal", "message": "Verifikasi Gagal: Wajah tidak cocok dengan dataset!"})
 
-        # 3. KALKULASI GEOFENCING (RUMUS HAVERSINE)
-        LAT_SEKOLAH = -2.9463   # Sesuaikan koordinat asli SMA Sjakhyakirti
-        LON_SEKOLAH = 104.7571
         
-        R = 6371000 # Radius bumi dalam meter
-        phi1 = np.radians(latitude)
-        phi2 = np.radians(LAT_SEKOLAH)
-        delta_phi = np.radians(LAT_SEKOLAH - latitude)
-        delta_lambda = np.radians(LON_SEKOLAH - longitude)
-        
-        a = np.sin(delta_phi/2)**2 + np.cos(phi1) * np.cos(phi2) * np.sin(delta_lambda/2)**2
-        c = 2 * np.arctan2(np.sqrt(a), np.sqrt(1-a))
-        distance_geo = round(R * c, 2)
+        distance_geo = hitung_jarak(
+            latitude,
+            longitude
+        )
 
-        # Batasan Radius Geofencing (Misal: 50 Meter)
-        RADIUS_MAKSIMAL = 50.0
         if distance_geo > RADIUS_MAKSIMAL:
             return JSONResponse(status_code=400, content={
                 "status": "gagal",
@@ -101,8 +132,6 @@ async def verify_presensi(
     except Exception as e:
         return JSONResponse(status_code=500, content={"status": "error", "message": f"Terjadi kesalahan internal server: {str(e)}"})
 
-import json
-
 #----BAGIAN ADMIN----
 @app.post("/admin/input-siswa")
 async def input_siswa_baru(
@@ -127,12 +156,7 @@ async def input_siswa_baru(
         # 1. Konversi file gambar kiriman HP Admin ke OpenCV Frame
         daftar_frame = []
         for file in files:
-            contents = await file.read()
-            nparr = np.frombuffer(contents, np.uint8)
-            img = cv2.imdecode(
-                nparr,
-                cv2.IMREAD_COLOR
-            )
+            img = await upload_to_cv2(file)
             if img is None:
                 return JSONResponse(
                     status_code=400,
