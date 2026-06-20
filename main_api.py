@@ -26,11 +26,11 @@ async def verify_presensi(
     nama_siswa: str = Form(...),
     latitude: float = Form(...),
     longitude: float = Form(...),
-    file: UploadFile = File(...)
+    files: list[UploadFile] = File(...)
 ):
     try:
         # 1. Konversi file gambar kiriman HP Android ke OpenCV Frame
-        contents = await file.read()
+        contents = await files.read()
         nparr = np.frombuffer(contents, np.uint8)
         img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
         
@@ -109,22 +109,43 @@ async def input_siswa_baru(
     nis_siswa: str = Form(...),
     nama_siswa: str = Form(...),
     kelas_siswa: str = Form(...),
-    file: UploadFile = File(...)
+    files: list[UploadFile] = File(...)
 ):
     try:
-        # 1. Konversi file gambar kiriman HP Admin ke OpenCV Frame
-        contents = await file.read()
-        nparr = np.frombuffer(contents, np.uint8)
-        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        # Validasi jumlah foto
+        if len(files) < 5:
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "status": "gagal",
+                    "message": "Minimal 5 foto diperlukan."
+                }
+            )
         
-        if img is None:
-            return JSONResponse(status_code=400, content={"status": "gagal", "message": "File gambar master tidak valid."})
-
-        # 2. PROSES JANTUNG AI UNTUK REGISTRASI (MTCNN & ARCFACE)
-        sukses_ekstrak, vektor_wajah = engine.ekstrak_vektor_master(img)
-
+        # 1. Konversi file gambar kiriman HP Admin ke OpenCV Frame
+        daftar_frame = []
+        for file in files:
+            contents = await file.read()
+            nparr = np.frombuffer(contents, np.uint8)
+            img = cv2.imdecode(
+                nparr,
+                cv2.IMREAD_COLOR
+            )
+            if img is None:
+                return JSONResponse(
+                    status_code=400,
+                    content={
+                        "status": "gagal",
+                        "message": f"File {file.filename} tidak valid."
+                    }
+                )
+            daftar_frame.append(img)
+         # 2. Membuat centroid embedding
+        sukses_ekstrak, vektor_wajah = engine.ekstrak_vektor_centroid(
+            daftar_frame
+        )   
         if not sukses_ekstrak:
-            return JSONResponse(status_code=400, content={"status": "gagal", "message": "Gagal registrasi: Wajah tidak terdeteksi oleh MTCNN!"})
+            return JSONResponse(status_code=400, content={"status": "gagal", "message": "Minimal 5 wajah valid diperlukan."})
 
         # 3. MASUKKAN KE DATABASE MYSQL RAILWAY
         db = get_db_connection() # Tinggal panggil, karena sudah di-import di atas

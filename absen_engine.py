@@ -169,3 +169,35 @@ class AbsenEngine:
             # Jika MTCNN gagal mendeteksi wajah dalam foto master
             print(f"❌ API ENGINE: Gagal ekstraksi wajah master: {e}")
             return False, None
+        
+    def ekstrak_vektor_centroid(self, daftar_frame):
+        """
+        Menerima banyak frame (minimal 5), menghasilkan 1 centroid embedding.
+        """
+        if len(daftar_frame) < 5:
+            return False, None
+        all_embeddings = []
+        try:
+            for frame in daftar_frame:
+                results = DeepFace.represent(
+                    img_path=frame,
+                    model_name=MODEL_NAME,
+                    detector_backend=DETECTOR,
+                    enforce_detection=True,
+                    align=True
+                )
+                if len(results) == 0:
+                    all_embeddings.append(results[0]["embedding"])
+                embedding = results[0]["embedding"]
+                all_embeddings.append(embedding)
+            # Minimal 5 wajah berhasil diekstrak
+            if len(all_embeddings) < 5:
+                return False, None
+            centroid = np.mean(
+                np.array(all_embeddings),
+                axis=0
+            )
+            return True, centroid.tolist()
+        except Exception as e:
+            print(f"❌ API ENGINE: Gagal membuat centroid: {e}")
+            return False, None    
