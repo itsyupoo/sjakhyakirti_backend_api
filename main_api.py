@@ -26,11 +26,11 @@ async def verify_presensi(
     nama_siswa: str = Form(...),
     latitude: float = Form(...),
     longitude: float = Form(...),
-    files: list[UploadFile] = File(...)
+    file: UploadFile = File(...)
 ):
     try:
         # 1. Konversi file gambar kiriman HP Android ke OpenCV Frame
-        contents = await files.read()
+        contents = await file.read()
         nparr = np.frombuffer(contents, np.uint8)
         img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
         
@@ -109,6 +109,8 @@ async def input_siswa_baru(
     nis_siswa: str = Form(...),
     nama_siswa: str = Form(...),
     kelas_siswa: str = Form(...),
+    jenis_kelamin: str = Form(...),
+    wa_ortu: str = Form(...),
     files: list[UploadFile] = File(...)
 ):
     try:
@@ -161,18 +163,15 @@ async def input_siswa_baru(
                 VALUES (NULL, %s, %s, %s, %s, %s, %s, %s, 'siswa')
             """
             
-            # Data default untuk kolom pelengkap database
-            jenis_kelamin_default = "L/P" 
-            wa_ortu_default = "-"
-            password_default = str(nis_siswa) 
-            
+            password_default = str(nis_siswa)
+
             params = (
-                str(nis_siswa), 
-                nama_siswa, 
-                jenis_kelamin_default, 
-                kelas_siswa, 
-                wa_ortu_default, 
-                vektor_string, 
+                str(nis_siswa),
+                nama_siswa,
+                jenis_kelamin,
+                kelas_siswa,
+                wa_ortu,
+                vektor_string,
                 password_default
             )
             
