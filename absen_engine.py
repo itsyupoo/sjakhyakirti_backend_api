@@ -99,6 +99,7 @@ class AbsenEngine:
             return False, "SUDAH_ABSEN", 0, None
 
         try:
+            print("=== SEBELUM DEEPFACE ===")
             results = DeepFace.represent(
                 img_path = frame,
                 model_name = MODEL_NAME,
@@ -106,7 +107,8 @@ class AbsenEngine:
                 enforce_detection = True,
                 align = True
             )
-
+            print("=== SESUDAH DEEPFACE ===")
+            
             for res in results:
                 obj = res["facial_area"]
                 x, y, w, h = obj['x'], obj['y'], obj['w'], obj['h']
