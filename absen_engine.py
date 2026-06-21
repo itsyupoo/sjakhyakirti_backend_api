@@ -24,6 +24,9 @@ def get_db_connection():
 
 class AbsenEngine:
     def __init__(self):
+        print("🔥 Loading ArcFace Model...")
+        self.arcface_model = DeepFace.build_model("ArcFace")
+        print("✅ ArcFace Loaded")
         self.known_ids = []
         self.known_names = []
         self.known_embeddings = []

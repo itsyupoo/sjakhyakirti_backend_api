@@ -44,19 +44,29 @@ def hitung_jarak(latitude, longitude):
 
     return round(R * c, 2)
 
-async def upload_to_cv2(file: UploadFile):
-
+async def upload_to_cv2(file):
     contents = await file.read()
-
-    nparr = np.frombuffer(
-        contents,
-        np.uint8
-    )
-
-    return cv2.imdecode(
+    nparr = np.frombuffer(contents, np.uint8)
+    img = cv2.imdecode(
         nparr,
         cv2.IMREAD_COLOR
     )
+    if img is None:
+        return None
+    # Resize jika terlalu besar
+    h, w = img.shape[:2]
+    if max(h, w) > 1024:
+        scale = 1024 / max(h, w)
+        img = cv2.resize(
+            img,
+            (
+                int(w * scale),
+                int(h * scale)
+            )
+        )
+    print(f"Ukuran gambar: {img.shape}")
+
+    return img
 #----HALAMAN UTAMA---
 @app.get("/")
 def home():
