@@ -9,25 +9,46 @@ os.environ["XDG_RUNTIME_DIR"] = "/tmp/runtime-root"
 from datetime import datetime
 from absen_engine import AbsenEngine, get_db_connection
 
+def ambil_pengaturan_geofencing():
+    db = get_db_connection()
+    try:
+        cursor = db.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT latitude, longitude, radius, template_wa
+            FROM konfigurasi_geofencing
+            LIMIT 1
+        """)
+        data = cursor.fetchone()
+        cursor.close()
+        db.close()
+        return data
+    except Exception as e:
+        print(f"ERROR GEOFENCING: {e}")
+        return {
+            "latitude": -2.994583,
+            "longitude": 104.756111,
+            "radius": 100
+        }
+
 app = FastAPI(title="API Presensi cloud SMA Sjakhyakirti")
 engine = AbsenEngine()
-LAT_SEKOLAH = -2.9463
-LON_SEKOLAH = 104.7571
-RADIUS_MAKSIMAL = 50.0
 os.makedirs("hasil_presensi", exist_ok=True)
 
-def hitung_jarak(latitude, longitude):
+def hitung_jarak(
+    latitude,
+    longitude,
+    lat_sekolah,
+    lon_sekolah
+):
     R = 6371000
-
     phi1 = np.radians(latitude)
-    phi2 = np.radians(LAT_SEKOLAH)
-
+    phi2 = np.radians(lat_sekolah)
     delta_phi = np.radians(
-        LAT_SEKOLAH - latitude
+        lat_sekolah - latitude
     )
 
     delta_lambda = np.radians(
-        LON_SEKOLAH - longitude
+        lon_sekolah - longitude
     )
 
     a = (
@@ -101,11 +122,19 @@ async def verify_presensi(
             else:
                 return JSONResponse(status_code=400, content={"status": "gagal", "message": "Verifikasi Gagal: Wajah tidak cocok dengan dataset!"})
 
-        
+        data_geo = ambil_pengaturan_geofencing()
+        LAT_SEKOLAH = float(data_geo["latitude"])
+        LON_SEKOLAH = float(data_geo["longitude"])
+        RADIUS_MAKSIMAL = float(data_geo["radius"])
+        print("DATA GEO =", data_geo)
+
         distance_geo = hitung_jarak(
             latitude,
-            longitude
+            longitude,
+            LAT_SEKOLAH,
+            LON_SEKOLAH
         )
+        
 
         if distance_geo > RADIUS_MAKSIMAL:
             return JSONResponse(status_code=400, content={
