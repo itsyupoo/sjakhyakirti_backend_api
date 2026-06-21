@@ -131,12 +131,12 @@ class AbsenEngine:
                     if distance <= BEST_THRESHOLD:
                         if str(id_terdeteksi) == str(target_id):
                             # WAJAH COCOK DAN SESUAI AKUN LOGIN
-                            akurasi_persen = round((1 - distance) * 100, 2)
-                            return True, nama_db, akurasi_persen, (x, y, w, h)
+                            distance_final = round(distance, 4)
+                            return True, nama_db, distance_final, (x, y, w, h)
                         else:
-                            return False, "BUKAN_PEMILIK_AKUN", round((1 - distance) * 100, 2), (x, y, w, h)
+                            return False, "BUKAN_PEMILIK_AKUN", round(distance, 4), (x, y, w, h)
                     else:
-                        return False, "WAJAH_TIDAK_COCOK", round((1 - distance) * 100, 2), (x, y, w, h)
+                        return False, "WAJAH_TIDAK_COCOK", round(distance, 4), (x, y, w, h)
 
             return False, "TIDAK_DIKENALI", 0, None
         except Exception as e:
