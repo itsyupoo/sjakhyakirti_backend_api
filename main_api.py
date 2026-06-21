@@ -127,7 +127,12 @@ async def verify_presensi(
         LON_SEKOLAH = float(data_geo["longitude"])
         RADIUS_MAKSIMAL = float(data_geo["radius"])
         print("DATA GEO =", data_geo)
+        print("LAT SEKOLAH =", LAT_SEKOLAH)
+        print("LON SEKOLAH =", LON_SEKOLAH)
+        print("RADIUS =", RADIUS_MAKSIMAL)
 
+        print("LAT CLIENT =", latitude)
+        print("LON CLIENT =", longitude)
         distance_geo = hitung_jarak(
             latitude,
             longitude,
@@ -135,7 +140,6 @@ async def verify_presensi(
             LON_SEKOLAH
         )
         
-
         if distance_geo > RADIUS_MAKSIMAL:
             return JSONResponse(status_code=400, content={
                 "status": "gagal",
