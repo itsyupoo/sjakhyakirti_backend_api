@@ -86,8 +86,8 @@ async def upload_to_cv2(file):
             )
         )
     print(f"Ukuran gambar: {img.shape}")
-
     return img
+
 #----HALAMAN UTAMA---
 @app.get("/")
 def home():
@@ -163,7 +163,47 @@ async def verify_presensi(
 
         # TODO TAHAP BERIKUTNYA BESOK: 
         # Tambahkan fungsi insert catatan_kehadiran di sini & trigger WhatsApp Gateway.
+        db = get_db_connection()
+        cursor = db.cursor()
+        try:
+            waktu_sekarang = datetime.now()
 
+            status_kehadiran = (
+                "Hadir"
+                if waktu_sekarang.time() <= datetime.strptime("07:15:00", "%H:%M:%S").time()
+                else "Terlambat"
+            )
+
+            sql = """
+                INSERT INTO catatan_kehadiran
+                (
+                    id_siswa,
+                    status_kehadiran,
+                    distance,
+                    jarak_geo,
+                    waktu_absen
+                )
+                VALUES (%s,%s,%s,%s,%s)
+            """
+            cursor.execute(
+                sql,
+                (
+                    int(id_siswa),
+                    status_kehadiran,
+                    float(akurasi),
+                    float(distance_geo),
+                    waktu_sekarang
+                )
+            )
+            db.commit()
+
+        except Exception as db_err:
+            print(f"ERROR SIMPAN PRESENSI: {db_err}")
+
+        finally:
+            cursor.close()
+            db.close()
+            
         return {
             "status": "sukses",
             "nama": nama_siswa,
