@@ -250,7 +250,7 @@ async def verify_presensi(
 
             # Ambil nomor WA orang tua
             cursor.execute("""
-                SELECT wa_ortu
+                SELECT wa_ortu, kelas
                 FROM dataset_siswa
                 WHERE id_siswa = %s
             """, (int(id_siswa),))
@@ -259,33 +259,30 @@ async def verify_presensi(
 
             if ortu and ortu[0]:
 
-                pesan_wa = f"""
-                📢 Notifikasi Presensi Siswa
+                    nomor_wa = ortu[0]
+                    kelas_siswa = ortu[1]
 
-                Nama : {nama_siswa}
-                Status : {status_kehadiran}
+                    template_wa = data_geo.get(
+                        "template_wa",
+                        "Presensi [nama] kelas [kelas] tercatat [status] pada [jam]"
+                    )
 
-                Tanggal : {waktu_sekarang.strftime('%d-%m-%Y')}
-                Jam : {waktu_sekarang.strftime('%H:%M:%S')} WIB
+                    pesan_wa = (
+                        template_wa
+                        .replace("{nama_siswa}", nama_siswa)
+                        .replace("{kelas}", kelas_siswa)
+                        .replace("{status_kehadiran}", status_kehadiran)
+                        .replace("{tanggal}", waktu_sekarang.strftime("%d-%m-%Y"))
+                        .replace("{jam}", waktu_sekarang.strftime("%H:%M:%S"))
+                        .replace("{foto_url}", foto_url)
+                    )
 
-                📷 Bukti Presensi:
-                {foto_url}
-
-                SMA Sjakhyakirti Palembang
-                """
-                try:
                     kirim_wa_fonnte(
                         ortu[0],
                         pesan_wa,
                         path_foto
                     )
-                finally:
-                    try:
-                        #os.remove(path_foto)
-                        print("FOTO DIHAPUS")
-                    except Exception as e:
-                        print("GAGAL HAPUS FOTO:", e)
-
+                   
         except Exception as db_err:
             print(f"ERROR SIMPAN PRESENSI: {db_err}")
 
