@@ -60,6 +60,7 @@ def kirim_wa_fonnte(
         print(
             "ERROR FONNTE:",e)
         return False
+    
 def upload_ke_google_drive(path_foto):
     try:
         service_account_info = json.loads(
@@ -270,8 +271,9 @@ async def verify_presensi(
                     distance,
                     jarak_geo,
                     waktu_absen,
+                    foto_url
                 )
-                VALUES (%s,%s,%s,%s,%s)
+                VALUES (%s,%s,%s,%s,%s,%s)
             """
             cursor.execute(
                 sql,
@@ -280,7 +282,8 @@ async def verify_presensi(
                     status_kehadiran,
                     float(akurasi),
                     float(distance_geo),
-                    waktu_sekarang
+                    waktu_sekarang,
+                    foto_url
                 )
             )
             db.commit()
