@@ -385,13 +385,12 @@ def update_geofencing(data: GeofencingSchema):
 
 @app.get("/wa-template")
 def get_template_wa():
-
     data = ambil_pengaturan_geofencing()
 
     return {
         "template_wa": data.get(
             "template_wa",
-            "DEFAULT_TEMPLATE"
+            "Presensi [nama] kelas [kelas] tercatat [status] pada [jam]"
         )
     }
 
