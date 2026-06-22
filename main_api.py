@@ -277,8 +277,8 @@ async def verify_presensi(
                         .replace("{foto_url}", foto_url)
                     )
 
-                    kirim_wa_fonnte(
-                        ortu[0],
+                    status_wa = kirim_wa_fonnte(
+                        nomor_wa,
                         pesan_wa,
                         path_foto
                     )
@@ -294,6 +294,7 @@ async def verify_presensi(
             "status": "sukses",
             "nama": nama_siswa,
             "status_kehadiran": status_kehadiran,
+            "status_wa": status_wa,
             "jarak": distance_geo,
             "akurasi": akurasi,
             "pesan": "Presensi Berhasil Terverifikasi Sempurna di Cloud API!"
