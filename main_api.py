@@ -13,9 +13,7 @@ from mysql.connector import Error
 from zoneinfo import ZoneInfo
 from uuid import uuid4
 import requests
-from google.oauth2 import service_account
-from googleapiclient.discovery import build
-from googleapiclient.http import MediaFileUpload
+from fastapi.responses import FileResponse
 
 def ambil_pengaturan_geofencing():
     db = get_db_connection()
@@ -61,78 +59,6 @@ def kirim_wa_fonnte(
             "ERROR FONNTE:",e)
         return False
     
-def upload_ke_google_drive(path_foto):
-    try:
-        print("=== MASUK GOOGLE DRIVE ===")
-
-        print(
-            "GOOGLE JSON ADA:",
-            os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON") is not None
-        )
-        
-        service_account_info = json.loads(
-            os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON")
-        )
-
-        print(
-            "SERVICE ACCOUNT:",
-            service_account_info.get("client_email")
-        )
-
-        credentials = service_account.Credentials.from_service_account_info(
-            service_account_info,
-            scopes=["https://www.googleapis.com/auth/drive"]
-        )
-
-        service = build(
-            "drive",
-            "v3",
-            credentials=credentials
-        )
-
-        folder_id = os.getenv("GOOGLE_DRIVE_FOLDER_ID")
-        print("FOLDER ID:", folder_id)
-
-        file_metadata = {
-            "name": os.path.basename(path_foto),
-            "parents": [folder_id]
-        }
-
-        media = MediaFileUpload(
-            path_foto,
-            resumable=False
-        )
-
-        file = service.files().create(
-            body=file_metadata,
-            media_body=media,
-            fields="id"
-        ).execute()
-
-        file_id = file.get("id")
-
-        # Buat file bisa dilihat publik
-        service.permissions().create(
-            fileId=file_id,
-            body={
-                "type": "anyone",
-                "role": "reader"
-            }
-        ).execute()
-
-        link = f"https://drive.google.com/file/d/{file_id}/view"
-
-        print("GOOGLE DRIVE URL:", link)
-
-        return link
-
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-
-        print("ERROR GOOGLE DRIVE:", e)
-        return None
-        
 def hitung_jarak(
     latitude,
     longitude,
@@ -186,6 +112,22 @@ async def upload_to_cv2(file):
         )
     print(f"Ukuran gambar: {img.shape}")
     return img
+
+@app.get("/foto-presensi/{nama_file}")
+def lihat_foto_presensi(nama_file: str):
+
+    path = os.path.join(
+        "hasil_presensi",
+        nama_file
+    )
+
+    if not os.path.exists(path):
+        raise HTTPException(
+            status_code=404,
+            detail="Foto tidak ditemukan"
+        )
+
+    return FileResponse(path)
 
 #----HALAMAN UTAMA---
 @app.get("/")
@@ -265,7 +207,9 @@ async def verify_presensi(
         )
 
         cv2.imwrite(path_foto, img)
-        foto_url = upload_ke_google_drive(path_foto)
+        foto_url = (
+            f"https://sjakhyakirtibackendapi-production.up.railway.app/foto-presensi/{nama_file_hasil}"
+        )
         print(foto_url)
 
         db = get_db_connection()
@@ -316,16 +260,19 @@ async def verify_presensi(
             if ortu and ortu[0]:
 
                 pesan_wa = f"""
-            📢 Notifikasi Presensi Siswa
+                📢 Notifikasi Presensi Siswa
 
-            Nama : {nama_siswa}
-            Status : {status_kehadiran}
+                Nama : {nama_siswa}
+                Status : {status_kehadiran}
 
-            Tanggal : {waktu_sekarang.strftime('%d-%m-%Y')}
-            Jam : {waktu_sekarang.strftime('%H:%M:%S')} WIB
+                Tanggal : {waktu_sekarang.strftime('%d-%m-%Y')}
+                Jam : {waktu_sekarang.strftime('%H:%M:%S')} WIB
 
-            SMA Sjakhyakirti Palembang
-            """
+                📷 Bukti Presensi:
+                {foto_url}
+
+                SMA Sjakhyakirti Palembang
+                """
                 try:
                     kirim_wa_fonnte(
                         ortu[0],
@@ -334,7 +281,7 @@ async def verify_presensi(
                     )
                 finally:
                     try:
-                        os.remove(path_foto)
+                        #os.remove(path_foto)
                         print("FOTO DIHAPUS")
                     except Exception as e:
                         print("GAGAL HAPUS FOTO:", e)
