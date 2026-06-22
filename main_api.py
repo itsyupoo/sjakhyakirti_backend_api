@@ -10,6 +10,7 @@ from datetime import datetime
 from absen_engine import AbsenEngine, get_db_connection
 from pydantic import BaseModel
 from mysql.connector import Error
+from zoneinfo import ZoneInfo
 
 def ambil_pengaturan_geofencing():
     db = get_db_connection()
@@ -154,7 +155,7 @@ async def verify_presensi(
             x, y, w, h = koordinat
             cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 3) # Kotak hijau di wajah
         
-        waktu_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        waktu_str = datetime.now(ZoneInfo("Asia/Jakarta")).strftime("%Y-%m-%d %H:%M:%S")
         cv2.putText(img, f"ID/Name: {id_siswa} - {nama_siswa}", (15, 35), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
         cv2.putText(img, f"ArcFace Match: {akurasi}%", (15, 65), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
         cv2.putText(img, f"Geo-Dist: {distance_geo} m", (15, 95), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
