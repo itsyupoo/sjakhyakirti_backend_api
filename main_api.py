@@ -320,12 +320,6 @@ class GeofencingSchema(BaseModel):
     longitude_sekolah: float
     radius_meter: float
 
-# Schema untuk Sistem Keamanan
-class SistemKeamananSchema(BaseModel):
-    anti_mock_gps: str
-    emulator_detection: str
-    root_check: str 
-
 class TemplateWASchema(BaseModel):
     template_wa: str     
 
@@ -382,65 +376,6 @@ def update_geofencing(data: GeofencingSchema):
         cursor.execute(query, values)
         conn.commit()
         return {"status": "success", "message": "Konfigurasi geofencing berhasil diperbarui di cloud"}
-    except Error as e:
-        conn.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        cursor.close()
-        conn.close()
-
-@app.get("/sistem-keamanan")
-def get_sistem_keamanan():
-    conn = get_db_connection()
-    if not conn:
-        raise HTTPException(status_code=500, detail="Gagal terhubung ke database cloud")
-        
-    cursor = conn.cursor(dictionary=True)
-    try:
-        # Kita ambil data dari baris ID = 2 sesuai database kamu
-        cursor.execute("SELECT * FROM sistem_keamanan WHERE id = 2")
-        result = cursor.fetchone()
-        
-        if not result:
-            return {
-                "anti_mock_gps": "Aktif",
-                "emulator_detection": "Nonaktif",
-                "root_check": "Nonaktif"
-            }
-            
-        return {
-            "anti_mock_gps": result.get("anti_mock_gps", "Aktif"),
-            "emulator_detection": result.get("emulator_detection", "Nonaktif"),
-            "root_check": result.get("root_check", "Nonaktif")
-        }
-    except Error as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        cursor.close()
-        conn.close()
-
-@app.post("/sistem-keamanan/update")
-def update_sistem_keamanan(data: SistemKeamananSchema):
-    conn = get_db_connection()
-    if not conn:
-        raise HTTPException(status_code=500, detail="Gagal terhubung ke database cloud")
-        
-    cursor = conn.cursor()
-    # 👉 QUERY FIX: Menembak 3 kolom sekaligus dan mengunci ke ID = 2
-    query = """
-        INSERT INTO sistem_keamanan (id, anti_mock_gps, emulator_detection, root_check) 
-        VALUES (2, %s, %s, %s) 
-        ON DUPLICATE KEY UPDATE 
-        anti_mock_gps = %s, 
-        emulator_detection = %s, 
-        root_check = %s
-    """
-    values = (data.anti_mock_gps, data.emulator_detection, data.root_check,
-              data.anti_mock_gps, data.emulator_detection, data.root_check)
-    try:
-        cursor.execute(query, values)
-        conn.commit()
-        return {"status": "success", "message": "Konfigurasi keamanan berhasil diperbarui di cloud"}
     except Error as e:
         conn.rollback()
         raise HTTPException(status_code=500, detail=str(e))
