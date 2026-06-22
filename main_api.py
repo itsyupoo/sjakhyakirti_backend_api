@@ -50,7 +50,7 @@ def kirim_wa_fonnte(
         data = {"target": nomor,"message": pesan,}
         with open(path_foto, "rb") as foto:
             files = {"file": foto}
-        response = requests.post("https://api.fonnte.com/send",headers=headers,data=data,files=files,timeout=30)
+            response = requests.post("https://api.fonnte.com/send",headers=headers,data=data,files=files,timeout=30)
         print("RESPON FONNTE:",response.text)
         return True
     except Exception as e:
