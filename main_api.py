@@ -293,6 +293,7 @@ async def verify_presensi(
         return {
             "status": "sukses",
             "nama": nama_siswa,
+            "status_kehadiran": status_kehadiran,
             "jarak": distance_geo,
             "akurasi": akurasi,
             "pesan": "Presensi Berhasil Terverifikasi Sempurna di Cloud API!"
