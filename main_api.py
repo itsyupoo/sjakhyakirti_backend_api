@@ -385,13 +385,8 @@ def update_geofencing(data: GeofencingSchema):
 
 @app.get("/wa-template")
 def get_template_wa():
-    data = ambil_pengaturan_geofencing()
-
     return {
-        "template_wa": data.get(
-            "template_wa",
-            "Presensi [nama] kelas [kelas] tercatat [status] pada [jam]"
-        )
+        "template_wa": "TES_UCI_123"
     }
 
 @app.post("/wa-template/update")
