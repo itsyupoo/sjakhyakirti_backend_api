@@ -63,8 +63,20 @@ def kirim_wa_fonnte(
     
 def upload_ke_google_drive(path_foto):
     try:
+        print("=== MASUK GOOGLE DRIVE ===")
+
+        print(
+            "GOOGLE JSON ADA:",
+            os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON") is not None
+        )
+        
         service_account_info = json.loads(
             os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON")
+        )
+
+        print(
+            "SERVICE ACCOUNT:",
+            service_account_info.get("client_email")
         )
 
         credentials = service_account.Credentials.from_service_account_info(
@@ -79,6 +91,7 @@ def upload_ke_google_drive(path_foto):
         )
 
         folder_id = os.getenv("GOOGLE_DRIVE_FOLDER_ID")
+        print("FOLDER ID:", folder_id)
 
         file_metadata = {
             "name": os.path.basename(path_foto),
@@ -114,6 +127,9 @@ def upload_ke_google_drive(path_foto):
         return link
 
     except Exception as e:
+        import traceback
+        traceback.print_exc()
+
         print("ERROR GOOGLE DRIVE:", e)
         return None
         
