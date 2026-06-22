@@ -11,6 +11,8 @@ from absen_engine import AbsenEngine, get_db_connection
 from pydantic import BaseModel
 from mysql.connector import Error
 from zoneinfo import ZoneInfo
+from uuid import uuid4
+import requests
 
 def ambil_pengaturan_geofencing():
     db = get_db_connection()
@@ -38,6 +40,24 @@ app = FastAPI(title="API Presensi cloud SMA Sjakhyakirti")
 engine = AbsenEngine()
 os.makedirs("hasil_presensi", exist_ok=True)
 
+def kirim_wa_fonnte(
+    nomor,
+    pesan,
+    path_foto
+):
+    try:
+        headers = {"Authorization":os.getenv("FONNTE_TOKEN")}
+        data = {"target": nomor,"message": pesan,}
+        with open(path_foto, "rb") as foto:
+            files = {"file": foto}
+        response = requests.post("https://api.fonnte.com/send",headers=headers,data=data,files=files,timeout=30)
+        print("RESPON FONNTE:",response.text)
+        return True
+    except Exception as e:
+        print(
+            "ERROR FONNTE:",e)
+        return False
+    
 def hitung_jarak(
     latitude,
     longitude,
@@ -161,20 +181,24 @@ async def verify_presensi(
         cv2.putText(img, f"Geo-Dist: {distance_geo} m", (15, 95), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
         cv2.putText(img, waktu_str, (15, 125), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
 
-        # Simpan bukti file fisik JPG di server cloud
-        nama_file_hasil = f"BUKTI_{id_siswa}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.jpg"
-        cv2.imwrite(os.path.join("hasil_presensi", nama_file_hasil), img)
+        nama_file_hasil = (
+            f"BUKTI_{id_siswa}_{uuid4().hex}.jpg"
+        )
+        path_foto = os.path.join(
+            "hasil_presensi",
+            nama_file_hasil
+        )
 
-        # TODO TAHAP BERIKUTNYA BESOK: 
-        # Tambahkan fungsi insert catatan_kehadiran di sini & trigger WhatsApp Gateway.
+        cv2.imwrite(path_foto, img)
+
         db = get_db_connection()
         cursor = db.cursor()
         try:
-            waktu_sekarang = datetime.now()
+            waktu_sekarang = datetime.now(ZoneInfo("Asia/Jakarta"))
 
             status_kehadiran = (
                 "Hadir"
-                if waktu_sekarang.time() <= datetime.strptime("07:15:00", "%H:%M:%S").time()
+                if waktu_sekarang.time() <= datetime.strptime("08:00:00", "%H:%M:%S").time()
                 else "Terlambat"
             )
 
@@ -200,6 +224,41 @@ async def verify_presensi(
                 )
             )
             db.commit()
+
+            # Ambil nomor WA orang tua
+            cursor.execute("""
+                SELECT wa_ortu
+                FROM dataset_siswa
+                WHERE id_siswa = %s
+            """, (int(id_siswa),))
+
+            ortu = cursor.fetchone()
+
+            if ortu and ortu[0]:
+
+                pesan_wa = f"""
+            📢 Notifikasi Presensi Siswa
+
+            Nama : {nama_siswa}
+            Status : {status_kehadiran}
+
+            Tanggal : {waktu_sekarang.strftime('%d-%m-%Y')}
+            Jam : {waktu_sekarang.strftime('%H:%M:%S')} WIB
+
+            SMA Sjakhyakirti Palembang
+            """
+                try:
+                    kirim_wa_fonnte(
+                        ortu[0],
+                        pesan_wa,
+                        path_foto
+                    )
+                finally:
+                    try:
+                        os.remove(path_foto)
+                        print("FOTO DIHAPUS")
+                    except Exception as e:
+                        print("GAGAL HAPUS FOTO:", e)
 
         except Exception as db_err:
             print(f"ERROR SIMPAN PRESENSI: {db_err}")
