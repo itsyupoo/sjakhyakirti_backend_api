@@ -13,6 +13,9 @@ from mysql.connector import Error
 from zoneinfo import ZoneInfo
 from uuid import uuid4
 import requests
+from google.oauth2 import service_account
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaFileUpload
 
 def ambil_pengaturan_geofencing():
     db = get_db_connection()
@@ -57,7 +60,62 @@ def kirim_wa_fonnte(
         print(
             "ERROR FONNTE:",e)
         return False
-    
+def upload_ke_google_drive(path_foto):
+    try:
+        service_account_info = json.loads(
+            os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON")
+        )
+
+        credentials = service_account.Credentials.from_service_account_info(
+            service_account_info,
+            scopes=["https://www.googleapis.com/auth/drive"]
+        )
+
+        service = build(
+            "drive",
+            "v3",
+            credentials=credentials
+        )
+
+        folder_id = os.getenv("GOOGLE_DRIVE_FOLDER_ID")
+
+        file_metadata = {
+            "name": os.path.basename(path_foto),
+            "parents": [folder_id]
+        }
+
+        media = MediaFileUpload(
+            path_foto,
+            resumable=False
+        )
+
+        file = service.files().create(
+            body=file_metadata,
+            media_body=media,
+            fields="id"
+        ).execute()
+
+        file_id = file.get("id")
+
+        # Buat file bisa dilihat publik
+        service.permissions().create(
+            fileId=file_id,
+            body={
+                "type": "anyone",
+                "role": "reader"
+            }
+        ).execute()
+
+        link = f"https://drive.google.com/file/d/{file_id}/view"
+
+        print("GOOGLE DRIVE URL:", link)
+
+        return link
+
+    except Exception as e:
+        print("ERROR GOOGLE DRIVE:", e)
+        return None
+        
 def hitung_jarak(
     latitude,
     longitude,
@@ -190,6 +248,8 @@ async def verify_presensi(
         )
 
         cv2.imwrite(path_foto, img)
+        foto_url = upload_ke_google_drive(path_foto)
+        print(foto_url)
 
         db = get_db_connection()
         cursor = db.cursor()
@@ -209,7 +269,7 @@ async def verify_presensi(
                     status_kehadiran,
                     distance,
                     jarak_geo,
-                    waktu_absen
+                    waktu_absen,
                 )
                 VALUES (%s,%s,%s,%s,%s)
             """
