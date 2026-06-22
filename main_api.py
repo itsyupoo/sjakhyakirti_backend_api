@@ -2,12 +2,14 @@ import numpy as np
 import os
 import json
 import cv2
-from fastapi import FastAPI, File, UploadFile, Form
+from fastapi import FastAPI, File, UploadFile, Form, HTTPException
 from fastapi.responses import JSONResponse
 os.environ["QT_QPA_PLATFORM"] = "offscreen"
 os.environ["XDG_RUNTIME_DIR"] = "/tmp/runtime-root"
 from datetime import datetime
 from absen_engine import AbsenEngine, get_db_connection
+from pydantic import BaseModel
+from mysql.connector import Error
 
 def ambil_pengaturan_geofencing():
     db = get_db_connection()
@@ -27,7 +29,8 @@ def ambil_pengaturan_geofencing():
         return {
             "latitude": -2.994583,
             "longitude": 104.756111,
-            "radius": 100
+            "radius": 100,
+            "template_wa": ""
         }
 
 app = FastAPI(title="API Presensi cloud SMA Sjakhyakirti")
@@ -305,3 +308,198 @@ async def input_siswa_baru(
 
     except Exception as e:
         return JSONResponse(status_code=500, content={"status": "error", "message": f"Terjadi kesalahan internal server: {str(e)}"})
+
+ 
+class AbsenRequest(BaseModel):
+    nisn: str
+    status: str  
+
+
+class GeofencingSchema(BaseModel):
+    latitude_sekolah: float
+    longitude_sekolah: float
+    radius_meter: float
+
+# Schema untuk Sistem Keamanan
+class SistemKeamananSchema(BaseModel):
+    anti_mock_gps: str
+    emulator_detection: str
+    root_check: str 
+
+class TemplateWASchema(BaseModel):
+    template_wa: str     
+
+@app.get("/siswa")
+def get_all_siswa():
+    conn = get_db_connection()
+    if not conn:
+        raise HTTPException(status_code=500, detail="Gagal terhubung ke database cloud")
+    
+    cursor = conn.cursor(dictionary=True)
+    try:
+        cursor.execute("SELECT * FROM dataset_siswa")
+        siswa_data = cursor.fetchall()
+        return {"status": "sukses", "data": siswa_data}
+    except Error as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.get("/geofencing")
+def get_geofencing():
+    try:
+        data = ambil_pengaturan_geofencing()
+
+        return {
+            "latitude_sekolah": data.get("latitude", -2.9602),
+            "longitude_sekolah": data.get("longitude", 104.7554),
+            "radius_meter": data.get("radius", 50.0)
+        }
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Gagal mengambil konfigurasi geofencing: {str(e)}"
+        )
+
+@app.post("/geofencing/update")
+def update_geofencing(data: GeofencingSchema):
+    conn = get_db_connection()
+    if not conn:
+        raise HTTPException(status_code=500, detail="Gagal terhubung ke database cloud")
+        
+    cursor = conn.cursor()
+    query = """
+        INSERT INTO konfigurasi_geofencing (id, latitude, longitude, radius) 
+        VALUES (1, %s, %s, %s) 
+        ON DUPLICATE KEY UPDATE 
+        latitude=%s, longitude=%s, radius=%s
+    """
+    values = (data.latitude_sekolah, data.longitude_sekolah, data.radius_meter,
+              data.latitude_sekolah, data.longitude_sekolah, data.radius_meter)
+    try:
+        cursor.execute(query, values)
+        conn.commit()
+        return {"status": "success", "message": "Konfigurasi geofencing berhasil diperbarui di cloud"}
+    except Error as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.get("/sistem-keamanan")
+def get_sistem_keamanan():
+    conn = get_db_connection()
+    if not conn:
+        raise HTTPException(status_code=500, detail="Gagal terhubung ke database cloud")
+        
+    cursor = conn.cursor(dictionary=True)
+    try:
+        # Kita ambil data dari baris ID = 2 sesuai database kamu
+        cursor.execute("SELECT * FROM sistem_keamanan WHERE id = 2")
+        result = cursor.fetchone()
+        
+        if not result:
+            return {
+                "anti_mock_gps": "Aktif",
+                "emulator_detection": "Nonaktif",
+                "root_check": "Nonaktif"
+            }
+            
+        return {
+            "anti_mock_gps": result.get("anti_mock_gps", "Aktif"),
+            "emulator_detection": result.get("emulator_detection", "Nonaktif"),
+            "root_check": result.get("root_check", "Nonaktif")
+        }
+    except Error as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.post("/sistem-keamanan/update")
+def update_sistem_keamanan(data: SistemKeamananSchema):
+    conn = get_db_connection()
+    if not conn:
+        raise HTTPException(status_code=500, detail="Gagal terhubung ke database cloud")
+        
+    cursor = conn.cursor()
+    # 👉 QUERY FIX: Menembak 3 kolom sekaligus dan mengunci ke ID = 2
+    query = """
+        INSERT INTO sistem_keamanan (id, anti_mock_gps, emulator_detection, root_check) 
+        VALUES (2, %s, %s, %s) 
+        ON DUPLICATE KEY UPDATE 
+        anti_mock_gps = %s, 
+        emulator_detection = %s, 
+        root_check = %s
+    """
+    values = (data.anti_mock_gps, data.emulator_detection, data.root_check,
+              data.anti_mock_gps, data.emulator_detection, data.root_check)
+    try:
+        cursor.execute(query, values)
+        conn.commit()
+        return {"status": "success", "message": "Konfigurasi keamanan berhasil diperbarui di cloud"}
+    except Error as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.get("/wa-template")
+def get_template_wa():
+    data = ambil_pengaturan_geofencing()
+
+    return {
+        "template_wa": data.get(
+            "template_wa",
+            "Presensi [nama] kelas [kelas] tercatat [status] pada [jam]"
+        )
+    }
+
+@app.post("/wa-template/update")
+def update_template_wa(data: TemplateWASchema):
+
+    conn = get_db_connection()
+
+    if not conn:
+        raise HTTPException(
+            status_code=500,
+            detail="Gagal terhubung ke database"
+        )
+
+    cursor = conn.cursor()
+
+    try:
+
+        sql = """
+        UPDATE konfigurasi_geofencing
+        SET template_wa = %s
+        WHERE id = 1
+        """
+
+        cursor.execute(
+            sql,
+            (data.template_wa,)
+        )
+
+        conn.commit()
+
+        return {
+            "status": "success",
+            "message": "Template WhatsApp berhasil diperbarui"
+        }
+
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=str(e)
+        )
+
+    finally:
+        cursor.close()
+        conn.close()
+
