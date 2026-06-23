@@ -4,6 +4,7 @@ import json
 import cv2
 from fastapi import FastAPI, File, UploadFile, Form, HTTPException
 from fastapi.responses import JSONResponse
+from fastapi.responses import HTMLResponse
 os.environ["QT_QPA_PLATFORM"] = "offscreen"
 os.environ["XDG_RUNTIME_DIR"] = "/tmp/runtime-root"
 from datetime import datetime
@@ -478,6 +479,59 @@ def get_template_wa():
             "Presensi [nama] kelas [kelas] tercatat [status] pada [jam]"
         )
     }
+
+@app.get("/gps-test")
+async def gps_test():
+    return HTMLResponse("""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>GPS Test</title>
+    </head>
+
+    <body>
+        <h2>GPS Test SMA Sjakhyakirti</h2>
+
+        <button onclick="ambilGPS()">
+            Ambil Lokasi Saya
+        </button>
+
+        <p id="hasil">
+            Belum ada lokasi
+        </p>
+
+        <script>
+        function ambilGPS() {
+
+            navigator.geolocation.getCurrentPosition(
+
+                function(pos) {
+
+                    document.getElementById("hasil").innerHTML =
+                        "Latitude: " +
+                        pos.coords.latitude +
+                        "<br>Longitude: " +
+                        pos.coords.longitude;
+
+                },
+
+                function(err) {
+
+                    alert(
+                        "Gagal mengambil GPS: " +
+                        err.message
+                    );
+
+                }
+
+            );
+
+        }
+        </script>
+
+    </body>
+    </html>
+    """)
 
 @app.post("/wa-template/update")
 def update_template_wa(data: TemplateWASchema):
