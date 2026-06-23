@@ -533,6 +533,8 @@ async def gps_test():
 
                     });
 
+                },
+
                 function(err) {
 
                     alert(
@@ -550,17 +552,6 @@ async def gps_test():
     </body>
     </html>
     """)
-
-@app.post("/gps-submit")
-async def gps_submit(request: Request):
-
-    data = await request.json()
-
-    print("GPS DITERIMA =", data)
-
-    return {
-        "status": "ok"
-    }
 
 @app.post("/wa-template/update")
 def update_template_wa(data: TemplateWASchema):
