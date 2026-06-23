@@ -933,7 +933,7 @@ async def presensi_web(
         </h2>
 
         <p>
-            Sistem Presensi Berbasis Pengenalan Wajah dan Geofencing
+            Sistem Presensi Berbasis Pengenalan Wajah
         </p>
 
     </div>
@@ -1059,22 +1059,141 @@ async function uploadPresensi() {{
         const data =
             await response.json();
 
-        document.getElementById("hasil").innerHTML =
-            "<pre>" +
-            JSON.stringify(
-                data,
-                null,
-                2
-            ) +
-            "</pre>";
+        if (response.ok) {{
+
+            document.getElementById("hasil").innerHTML = `
+
+            <div class="success-box">
+
+                <div style="
+                    text-align:center;
+                    color:#16A34A;
+                    font-size:40px;
+                    margin-bottom:10px;
+                ">
+                    ✅
+                </div>
+
+                <div style="
+                    text-align:center;
+                    font-size:22px;
+                    font-weight:700;
+                    color:#16A34A;
+                    margin-bottom:15px;
+                ">
+                    Presensi Berhasil
+                </div>
+
+                <div style="
+                    display:flex;
+                    justify-content:space-between;
+                    margin-bottom:10px;
+                ">
+                    <span>Nama</span>
+                    <b>${{data.nama}}</b>
+                </div>
+
+                <div style="
+                    display:flex;
+                    justify-content:space-between;
+                    margin-bottom:10px;
+                ">
+                    <span>Status</span>
+                    <b>${{data.status_kehadiran}}</b>
+                </div>
+
+                <div style="
+                    display:flex;
+                    justify-content:space-between;
+                    margin-bottom:10px;
+                ">
+                    <span>Jarak</span>
+                    <b>${{data.jarak}} meter</b>
+                </div>
+
+                <div style="
+                    display:flex;
+                    justify-content:space-between;
+                    margin-bottom:10px;
+                ">
+                    <span>Cosine Distance</span>
+                    <b>${{data.akurasi}}</b>
+                </div>
+
+                <div style="
+                    display:flex;
+                    justify-content:space-between;
+                ">
+                    <span>WhatsApp</span>
+                    <b>
+                        ${{data.status_wa ? "✓ Terkirim" : "✗ Gagal"}}
+                    </b>
+                </div>
+
+            </div>
+
+            `;
+
+        }}
+        else {{
+
+            let judul = "❌ Presensi Gagal";
+            let pesan = data.message;
+
+            if (data.message.includes("sudah melakukan presensi")) {{
+
+                judul = "⚠️ Presensi Sudah Tercatat";
+
+            }}
+            else if (data.message.includes("siswa lain")) {{
+
+                judul = "🚫 Identitas Tidak Cocok";
+
+            }}
+            else if (data.message.includes("Wajah tidak terdeteksi")) {{
+
+                judul = "📷 Wajah Tidak Terdeteksi";
+
+            }}
+            else if (data.message.includes("tidak cocok")) {{
+
+                judul = "❌ Wajah Tidak Dikenali";
+
+            }}
+
+            document.getElementById("hasil").innerHTML = `
+
+            <div class="error-box">
+
+                <div style="
+                    text-align:center;
+                    font-size:22px;
+                    font-weight:700;
+                    color:#DC2626;
+                    margin-bottom:15px;
+                ">
+                    ${{judul}}
+                </div>
+
+                <div style="
+                    text-align:center;
+                    color:#7F1D1D;
+                    line-height:1.6;
+                ">
+                    ${{pesan}}
+                </div>
+
+            </div>
+
+            `;
+
+        }}
 
     }}
     catch(err) {{
 
         document.getElementById("hasil").innerHTML =
             "ERROR: " + err;
-
-    }}
 
 }}
 
