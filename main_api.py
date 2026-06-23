@@ -1145,8 +1145,9 @@ function ambilGPS() {{
                         display:flex;
                         justify-content:space-between;
                         margin-bottom:10px;
-                    "><span>Jarak Anda</span>
-                    <b>${{data.jarak}} meter</b>
+                    ">
+                        <span>Jarak Anda</span>
+                        <b>${{data.jarak}} meter</b>
                     </div>
 
                     <div style="
