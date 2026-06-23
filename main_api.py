@@ -1197,6 +1197,8 @@ async function uploadPresensi() {{
 
 }}
 
+}}
+
 function ambilGPS() {{
 
     navigator.geolocation.getCurrentPosition(
