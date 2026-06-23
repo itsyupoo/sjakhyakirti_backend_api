@@ -848,6 +848,72 @@ async def presensi_web(
         text-align: center;
     }}
 
+    .loading {{
+
+        color: #2563EB;
+
+        font-weight: 600;
+
+        text-align: center;
+        }}
+
+    .info-card {{
+
+        background:#F8FAFC;
+
+        border:1px solid #E2E8F0;
+
+        border-radius:18px;
+
+        padding:18px;
+
+        margin-bottom:20px;
+        }}
+
+    .info-row {{
+
+        display:flex;
+
+        justify-content:space-between;
+
+        align-items:center;
+
+        margin-bottom:12px;
+       }}
+
+        .info-row:last-child {{
+
+        margin-bottom:0;
+        }}
+
+        .label {{
+
+        color:#64748B;
+
+        font-size:14px;
+        }}
+
+        .value {{
+
+        color:#0F172A;
+
+        font-weight:600;
+        }}
+
+        .badge {{
+
+        background:#DBEAFE;
+
+        color:#1D4ED8;
+
+        padding:5px 12px;
+
+        border-radius:999px;
+
+        font-size:12px;
+
+        font-weight:700;
+        }}
     </style>
         
 </head>
@@ -965,22 +1031,21 @@ async function uploadPresensi() {{
 
     document.getElementById("hasil").innerHTML = `
 
-<div class="info-card">
+    <div class="info-card">
 
-    <div class="loading">
+        <div class="loading">
 
-        ⏳ Memverifikasi wajah...
+            ⏳ Memverifikasi wajah...
 
-        <br><br>
+            <br><br>
 
-        Mohon tunggu beberapa detik
+            Mohon tunggu beberapa detik
+
+        </div>
 
     </div>
 
-</div>
-
-`;
-
+    `;
     try {{
 
         const response = await fetch(
@@ -1052,49 +1117,134 @@ function ambilGPS() {{
 
             .then(data => {{
 
-                let html =
-                    "<b>Geo OK:</b> " +
-                    data.geo_ok +
+            let html = "";
 
-                    "<br><br>" +
+            if (data.geo_ok) {{
 
-                    "<b>Jarak:</b> " +
-                    data.jarak +
-                    " meter" +
+                html = `
 
-                    "<br><br>" +
+                <div class="geo-box">
 
-                    "<b>Radius:</b> " +
-                    data.radius +
-                    " meter";
+                    <div style="
+                        color:#16A34A;
+                        font-weight:700;
+                        font-size:18px;
+                        margin-bottom:12px;
+                    ">
+                        ✅ Dalam Radius Sekolah
+                    </div>
 
-                if (data.geo_ok) {{
+                    <div style="
+                        color:#475569;
+                        margin-bottom:16px;
+                    ">
+                        Lokasi Anda berhasil diverifikasi.
+                    </div>
 
-                    html += `
+                    <div style="
+                        display:flex;
+                        justify-content:space-between;
+                        margin-bottom:10px;
+                    ">
+                        <span>Jarak Anda</span>
+                        <b>${data.jarak} meter</b>
+                    </div>
 
-                        <br><br>
+                    <div style="
+                        display:flex;
+                        justify-content:space-between;
+                    ">
+                        <span>Radius Sekolah</span>
+                        <b>${data.radius} meter</b>
+                    </div>
 
-                        <h3>📸 Ambil Selfie</h3>
+                </div>
 
-                        <input
-                            type="file"
-                            id="foto"
-                            accept="image/*"
-                            capture="user">
+                <div style="height:20px"></div>
 
-                        <br><br>
+                <div class="geo-box">
 
-                        <button onclick="uploadPresensi()">
-                            Kirim Presensi
-                        </button>
+                    <div style="
+                        font-size:18px;
+                        font-weight:700;
+                        color:#0F172A;
+                        margin-bottom:10px;
+                    ">
+                        📸 Ambil Selfie
+                    </div>
 
-                    `;
+                    <div style="
+                        color:#64748B;
+                        font-size:14px;
+                        margin-bottom:15px;
+                    ">
+                        Pastikan wajah terlihat jelas dan pencahayaan cukup.
+                    </div>
 
-                }}
+                    <input
+                        type="file"
+                        id="foto"
+                        accept="image/*"
+                        capture="user">
 
-                document.getElementById(
-                    "hasil"
-                ).innerHTML = html;
+                    <br><br>
+
+                    <button onclick="uploadPresensi()">
+                        🚀 Kirim Presensi
+                    </button>
+
+                </div>
+
+                `;
+
+            }}
+            else {{
+
+                html = `
+
+                <div class="error-box">
+
+                    <div style="
+                        color:#DC2626;
+                        font-weight:700;
+                        font-size:18px;
+                        margin-bottom:12px;
+                    ">
+                        ❌ Di Luar Radius Sekolah
+                    </div>
+
+                    <div style="
+                        color:#7F1D1D;
+                        margin-bottom:16px;
+                    ">
+                        Anda berada di luar area presensi yang diizinkan.
+                    </div>
+
+                    <div style="
+                        display:flex;
+                        justify-content:space-between;
+                        margin-bottom:10px;
+                    ">
+                        <span>Jarak Anda</span>
+                        <b>${data.jarak} meter</b>
+                    </div>
+
+                    <div style="
+                        display:flex;
+                        justify-content:space-between;
+                    ">
+                        <span>Radius Maksimal</span>
+                        <b>${data.radius} meter</b>
+                    </div>
+
+                </div>
+
+                `;
+
+            }}
+
+            document.getElementById("hasil").innerHTML = html;
+
 
             }})
 
