@@ -514,7 +514,7 @@ async def gps_test():
                         "<br>Longitude: " +
                         pos.coords.longitude;
 
-                    fetch("/gps-submit", {
+                    fetch("/cek-lokasi", {
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json"
@@ -523,8 +523,15 @@ async def gps_test():
                             latitude: pos.coords.latitude,
                             longitude: pos.coords.longitude
                         })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+
+                        document.getElementById("hasil").innerHTML =
+                            "Jarak: " + data.jarak +
+                            "<br>Geo OK: " + data.geo_ok;
+
                     });
-                },
 
                 function(err) {
 
