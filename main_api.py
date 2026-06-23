@@ -737,22 +737,30 @@ function ambilGPS() {{
 
             .then(data => {{
 
-                document.getElementById("hasil").innerHTML =
-
-                    "<b>Geo OK:</b> " +
-                    data.geo_ok +
-
+                let html =
+                    "<b>Geo OK:</b> " + data.geo_ok +
                     "<br><br>" +
-
-                    "<b>Jarak:</b> " +
-                    data.jarak +
-                    " meter" +
-
+                    "<b>Jarak:</b> " + data.jarak + " meter" +
                     "<br><br>" +
+                    "<b>Radius:</b> " + data.radius + " meter";
 
-                    "<b>Radius:</b> " +
-                    data.radius +
-                    " meter";
+                if (data.geo_ok) {{
+
+                    html += `
+                        <br><br>
+
+                        <h3>Ambil Selfie</h3>
+
+                        <input
+                            type="file"
+                            id="foto"
+                            accept="image/*"
+                            capture="user">
+                    `;
+
+                }}
+
+                document.getElementById("hasil").innerHTML = html;
 
             }})
 
@@ -762,7 +770,6 @@ function ambilGPS() {{
                     "ERROR: " + err;
 
             }});
-
         }},
 
         function(err) {{
