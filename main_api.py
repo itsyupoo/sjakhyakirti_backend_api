@@ -618,7 +618,7 @@ def cek_lokasi(data: CekLokasiSchema):
     print("MASUK CEK LOKASI")
     print("LAT =", data.latitude)
     print("LON =", data.longitude)
-    
+
     data_geo = ambil_pengaturan_geofencing()
 
     jarak = hitung_jarak(
@@ -628,10 +628,13 @@ def cek_lokasi(data: CekLokasiSchema):
         float(data_geo["longitude"])
     )
 
+    jarak = float(jarak)
+
     geo_ok = jarak <= float(data_geo["radius"])
 
     return {
-        "geo_ok": geo_ok,
+        "geo_ok": bool(geo_ok),
         "jarak": round(jarak, 2),
         "radius": float(data_geo["radius"])
     }
+
