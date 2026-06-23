@@ -1226,7 +1226,7 @@ function ambilGPS() {{
                         margin-bottom:10px;
                     ">
                         <span>Jarak Anda</span>
-                        <b>${data.jarak} meter</b>
+                        <b>${{data.jarak}} meter</b>
                     </div>
 
                     <div style="
@@ -1234,7 +1234,7 @@ function ambilGPS() {{
                         justify-content:space-between;
                     ">
                         <span>Radius Maksimal</span>
-                        <b>${data.radius} meter</b>
+                        <b>${{data.radius}} meter</b>
                     </div>
 
                 </div>
