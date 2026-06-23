@@ -2,6 +2,7 @@ import numpy as np
 import os
 import json
 import cv2
+from fastapi import Request
 from fastapi import FastAPI, File, UploadFile, Form, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.responses import HTMLResponse
@@ -513,6 +514,16 @@ async def gps_test():
                         "<br>Longitude: " +
                         pos.coords.longitude;
 
+                    fetch("/gps-submit", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            latitude: pos.coords.latitude,
+                            longitude: pos.coords.longitude
+                        })
+                    });
                 },
 
                 function(err) {
@@ -532,6 +543,17 @@ async def gps_test():
     </body>
     </html>
     """)
+
+@app.post("/gps-submit")
+async def gps_submit(request: Request):
+
+    data = await request.json()
+
+    print("GPS DITERIMA =", data)
+
+    return {
+        "status": "ok"
+    }
 
 @app.post("/wa-template/update")
 def update_template_wa(data: TemplateWASchema):
