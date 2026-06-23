@@ -599,3 +599,32 @@ def update_template_wa(data: TemplateWASchema):
         cursor.close()
         conn.close()
 
+class CekLokasiSchema(BaseModel):
+    latitude: float
+    longitude: float
+
+@app.get("/cek-lokasi-test")
+def cek_lokasi_test():
+    return {
+        "status": "aktif"
+    }
+
+@app.post("/cek-lokasi")
+def cek_lokasi(data: CekLokasiSchema):
+
+    data_geo = ambil_pengaturan_geofencing()
+
+    jarak = hitung_jarak(
+        data.latitude,
+        data.longitude,
+        float(data_geo["latitude"]),
+        float(data_geo["longitude"])
+    )
+
+    geo_ok = jarak <= float(data_geo["radius"])
+
+    return {
+        "geo_ok": geo_ok,
+        "jarak": round(jarak, 2),
+        "radius": float(data_geo["radius"])
+    }
