@@ -524,15 +524,20 @@ async def gps_test():
                             longitude: pos.coords.longitude
                         })
                     })
-                    .then(response => response.json())
+                    .then(response => {
+                        console.log("STATUS =", response.status);
+                        return response.text();
+                    })
                     .then(data => {
+                        console.log("RESP =", data);
 
                         document.getElementById("hasil").innerHTML =
-                            "Jarak: " + data.jarak +
-                            "<br>Geo OK: " + data.geo_ok;
-
+                            "RESPON SERVER:<br>" + data;
+                    })
+                    .catch(err => {
+                        document.getElementById("hasil").innerHTML =
+                            "ERROR FETCH:<br>" + err;
                     });
-
                 },
 
                 function(err) {
@@ -610,6 +615,10 @@ def cek_lokasi_test():
 @app.post("/cek-lokasi")
 def cek_lokasi(data: CekLokasiSchema):
 
+    print("MASUK CEK LOKASI")
+    print("LAT =", data.latitude)
+    print("LON =", data.longitude)
+    
     data_geo = ambil_pengaturan_geofencing()
 
     jarak = hitung_jarak(
