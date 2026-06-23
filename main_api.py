@@ -638,3 +638,148 @@ def cek_lokasi(data: CekLokasiSchema):
         "radius": float(data_geo["radius"])
     }
 
+@app.get("/presensi-web")
+async def presensi_web(
+    id_siswa: int,
+    nama: str
+):
+    return HTMLResponse(f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Presensi Siswa</title>
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <style>
+
+        body {{
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+        }}
+
+        .card {{
+            max-width: 400px;
+            margin: auto;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            padding: 20px;
+        }}
+
+        button {{
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            margin-top: 15px;
+        }}
+
+        #hasil {{
+            margin-top: 20px;
+            font-size: 18px;
+        }}
+
+    </style>
+</head>
+
+<body>
+
+<div class="card">
+
+    <h2>Presensi SMA Sjakhyakirti</h2>
+
+    <p>
+        <b>ID:</b> {id_siswa}
+    </p>
+
+    <p>
+        <b>Nama:</b> {nama}
+    </p>
+
+    <button onclick="ambilGPS()">
+        Ambil Lokasi Saya
+    </button>
+
+    <div id="hasil">
+        Menunggu GPS...
+    </div>
+
+</div>
+
+<script>
+
+function ambilGPS() {{
+
+    navigator.geolocation.getCurrentPosition(
+
+        function(pos) {{
+
+            document.getElementById("hasil").innerHTML =
+                "Memeriksa geofencing...";
+
+            fetch("/cek-lokasi", {{
+
+                method: "POST",
+
+                headers: {{
+                    "Content-Type": "application/json"
+                }},
+
+                body: JSON.stringify({{
+                    latitude: pos.coords.latitude,
+                    longitude: pos.coords.longitude
+                }})
+
+            }})
+
+            .then(response => response.json())
+
+            .then(data => {{
+
+                document.getElementById("hasil").innerHTML =
+
+                    "<b>Geo OK:</b> " +
+                    data.geo_ok +
+
+                    "<br><br>" +
+
+                    "<b>Jarak:</b> " +
+                    data.jarak +
+                    " meter" +
+
+                    "<br><br>" +
+
+                    "<b>Radius:</b> " +
+                    data.radius +
+                    " meter";
+
+            }})
+
+            .catch(err => {{
+
+                document.getElementById("hasil").innerHTML =
+                    "ERROR: " + err;
+
+            }});
+
+        }},
+
+        function(err) {{
+
+            alert(
+                "Gagal mengambil GPS: " +
+                err.message
+            );
+
+        }}
+
+    );
+
+}}
+
+</script>
+
+</body>
+</html>
+""")
