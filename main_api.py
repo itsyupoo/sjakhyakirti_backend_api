@@ -655,75 +655,250 @@ async def presensi_web(
 
     <style>
 
-        body {{
-            font-family: Arial, sans-serif;
-            background: #f5f7fa;
-            padding: 20px;
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+    * {{
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }}
+
+    body {{
+
+        font-family: 'Poppins', sans-serif;
+
+        min-height: 100vh;
+
+        background: linear-gradient(
+            180deg,
+            #2563EB 0%,
+            #60A5FA 100%
+        );
+
+        padding: 20px;
+
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }}
+
+    .card {{
+
+        width: 100%;
+        max-width: 520px;
+
+        background: #FFFFFF;
+
+        border-radius: 24px;
+
+        padding: 28px;
+
+        box-shadow:
+            0 15px 40px rgba(0,0,0,0.15);
+
+        animation: fadeIn .4s ease;
+    }}
+
+    @keyframes fadeIn {{
+
+        from {{
+            opacity: 0;
+            transform: translateY(20px);
         }}
 
-        .card {{
-            max-width: 500px;
-            margin: auto;
-            background: white;
-            border-radius: 15px;
-            padding: 25px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        to {{
+            opacity: 1;
+            transform: translateY(0);
         }}
+    }}
 
-        h2 {{
-            text-align: center;
-            margin-bottom: 20px;
-        }}
+    h2 {{
 
-        button {{
-            width: 100%;
-            padding: 14px;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            cursor: pointer;
-            margin-top: 10px;
-        }}
+        text-align: center;
 
-        #hasil {{
-            margin-top: 20px;
-            text-align: center;
-            font-size: 16px;
-        }}
+        color: #0F172A;
 
-        input[type=file] {{
-            width: 100%;
-            margin-top: 10px;
-        }}
+        font-size: 26px;
 
-        pre {{
-            text-align: left;
-            white-space: pre-wrap;
-            word-break: break-word;
-            background: #f0f0f0;
-            padding: 10px;
-            border-radius: 10px;
-        }}
+        font-weight: 700;
+
+        margin-bottom: 20px;
+    }}
+
+    p {{
+        color: #334155;
+        margin-bottom: 12px;
+    }}
+
+    button {{
+
+        width: 100%;
+
+        padding: 15px;
+
+        border: none;
+
+        border-radius: 14px;
+
+        background: #2563EB;
+
+        color: white;
+
+        font-size: 15px;
+
+        font-weight: 600;
+
+        cursor: pointer;
+
+        transition: .2s;
+    }}
+
+    button:hover {{
+        background: #1D4ED8;
+    }}
+
+    button:active {{
+        transform: scale(.98);
+    }}
+
+    #hasil {{
+
+        margin-top: 20px;
+
+        text-align: center;
+
+        font-size: 15px;
+
+        color: #0F172A;
+    }}
+
+    input[type=file] {{
+
+        width: 100%;
+
+        margin-top: 12px;
+
+        padding: 12px;
+
+        border: 2px dashed #93C5FD;
+
+        border-radius: 14px;
+
+        background: #EFF6FF;
+    }}
+
+    pre {{
+
+        text-align: left;
+
+        white-space: pre-wrap;
+
+        word-break: break-word;
+
+        background: #F8FAFC;
+
+        border: 1px solid #E2E8F0;
+
+        padding: 14px;
+
+        border-radius: 14px;
+
+        font-size: 13px;
+    }}
+
+    .success-box {{
+
+        background: #ECFDF5;
+
+        border: 1px solid #A7F3D0;
+
+        border-radius: 16px;
+
+        padding: 16px;
+    }}
+
+    .error-box {{
+
+        background: #FEF2F2;
+
+        border: 1px solid #FECACA;
+
+        border-radius: 16px;
+
+        padding: 16px;
+    }}
+
+    .geo-box {{
+
+        background: #EFF6FF;
+
+        border: 1px solid #BFDBFE;
+
+        border-radius: 16px;
+
+        padding: 16px;
+    }}
+
+    .loading {{
+
+        color: #2563EB;
+
+        font-weight: 600;
+
+        text-align: center;
+    }}
 
     </style>
-
+        
 </head>
 
 <body>
 
 <div class="card">
 
-    <h2>📍 Presensi SMA Sjakhyakirti</h2>
+    <div class="header">
 
-    <p>
-        <b>ID Siswa:</b><br>
-        {id_siswa}
-    </p>
+        <div class="icon">
+            📍
+        </div>
 
-    <p>
-        <b>Nama Siswa:</b><br>
-        {nama}
-    </p>
+        <h2>
+            Presensi SMA Sjakhyakirti
+        </h2>
+
+        <p>
+            Sistem Presensi Berbasis Pengenalan Wajah dan Geofencing
+        </p>
+
+    </div>
+
+    <div class="info-card">
+
+        <div class="info-row">
+
+            <span class="label">
+                ID Siswa
+            </span>
+
+            <span class="badge">
+                {id_siswa}
+            </span>
+
+        </div>
+
+        <div class="info-row">
+
+            <span class="label">
+                Nama
+            </span>
+
+            <span class="value">
+                {nama}
+            </span>
+
+        </div>
+
+    </div>
 
     <input
         type="hidden"
@@ -788,8 +963,23 @@ async function uploadPresensi() {{
         fileInput.files[0]
     );
 
-    document.getElementById("hasil").innerHTML =
-        "⏳ Mengirim presensi ke server...";
+    document.getElementById("hasil").innerHTML = `
+
+<div class="info-card">
+
+    <div class="loading">
+
+        ⏳ Memverifikasi wajah...
+
+        <br><br>
+
+        Mohon tunggu beberapa detik
+
+    </div>
+
+</div>
+
+`;
 
     try {{
 
