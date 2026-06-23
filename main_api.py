@@ -647,7 +647,8 @@ async def presensi_web(
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Presensi Siswa</title>
+
+    <title>Presensi SMA Sjakhyakirti</title>
 
     <meta name="viewport"
           content="width=device-width, initial-scale=1.0">
@@ -656,46 +657,83 @@ async def presensi_web(
 
         body {{
             font-family: Arial, sans-serif;
-            text-align: center;
+            background: #f5f7fa;
             padding: 20px;
         }}
 
         .card {{
-            max-width: 400px;
+            max-width: 500px;
             margin: auto;
-            border: 1px solid #ddd;
-            border-radius: 12px;
-            padding: 20px;
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }}
+
+        h2 {{
+            text-align: center;
+            margin-bottom: 20px;
         }}
 
         button {{
             width: 100%;
-            padding: 15px;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
             font-size: 16px;
-            margin-top: 15px;
+            cursor: pointer;
+            margin-top: 10px;
         }}
 
         #hasil {{
             margin-top: 20px;
-            font-size: 18px;
+            text-align: center;
+            font-size: 16px;
+        }}
+
+        input[type=file] {{
+            width: 100%;
+            margin-top: 10px;
+        }}
+
+        pre {{
+            text-align: left;
+            white-space: pre-wrap;
+            word-break: break-word;
+            background: #f0f0f0;
+            padding: 10px;
+            border-radius: 10px;
         }}
 
     </style>
+
 </head>
 
 <body>
 
 <div class="card">
 
-    <h2>Presensi SMA Sjakhyakirti</h2>
+    <h2>📍 Presensi SMA Sjakhyakirti</h2>
 
     <p>
-        <b>ID:</b> {id_siswa}
+        <b>ID Siswa:</b><br>
+        {id_siswa}
     </p>
 
     <p>
-        <b>Nama:</b> {nama}
+        <b>Nama Siswa:</b><br>
+        {nama}
     </p>
+
+    <input
+        type="hidden"
+        id="id_siswa"
+        value="{id_siswa}">
+
+    <input
+        type="hidden"
+        id="nama_siswa"
+        value="{nama}">
 
     <button onclick="ambilGPS()">
         Ambil Lokasi Saya
@@ -709,11 +747,93 @@ async def presensi_web(
 
 <script>
 
+async function uploadPresensi() {{
+
+    const fileInput =
+        document.getElementById("foto");
+
+    if (!fileInput.files.length) {{
+
+        alert(
+            "Silakan ambil selfie terlebih dahulu."
+        );
+
+        return;
+    }}
+
+    let formData = new FormData();
+
+    formData.append(
+        "id_siswa",
+        document.getElementById("id_siswa").value
+    );
+
+    formData.append(
+        "nama_siswa",
+        document.getElementById("nama_siswa").value
+    );
+
+    formData.append(
+        "latitude",
+        window.latGPS
+    );
+
+    formData.append(
+        "longitude",
+        window.lonGPS
+    );
+
+    formData.append(
+        "file",
+        fileInput.files[0]
+    );
+
+    document.getElementById("hasil").innerHTML =
+        "⏳ Mengirim presensi ke server...";
+
+    try {{
+
+        const response = await fetch(
+            "/verify-presensi",
+            {{
+                method: "POST",
+                body: formData
+            }}
+        );
+
+        const data =
+            await response.json();
+
+        document.getElementById("hasil").innerHTML =
+            "<pre>" +
+            JSON.stringify(
+                data,
+                null,
+                2
+            ) +
+            "</pre>";
+
+    }}
+    catch(err) {{
+
+        document.getElementById("hasil").innerHTML =
+            "ERROR: " + err;
+
+    }}
+
+}}
+
 function ambilGPS() {{
 
     navigator.geolocation.getCurrentPosition(
 
         function(pos) {{
+
+            window.latGPS =
+                pos.coords.latitude;
+
+            window.lonGPS =
+                pos.coords.longitude;
 
             document.getElementById("hasil").innerHTML =
                 "Memeriksa geofencing...";
@@ -723,53 +843,80 @@ function ambilGPS() {{
                 method: "POST",
 
                 headers: {{
-                    "Content-Type": "application/json"
+                    "Content-Type":
+                    "application/json"
                 }},
 
                 body: JSON.stringify({{
-                    latitude: pos.coords.latitude,
-                    longitude: pos.coords.longitude
+                    latitude:
+                        pos.coords.latitude,
+                    longitude:
+                        pos.coords.longitude
                 }})
 
             }})
 
-            .then(response => response.json())
+            .then(response =>
+                response.json()
+            )
 
             .then(data => {{
 
                 let html =
-                    "<b>Geo OK:</b> " + data.geo_ok +
+                    "<b>Geo OK:</b> " +
+                    data.geo_ok +
+
                     "<br><br>" +
-                    "<b>Jarak:</b> " + data.jarak + " meter" +
+
+                    "<b>Jarak:</b> " +
+                    data.jarak +
+                    " meter" +
+
                     "<br><br>" +
-                    "<b>Radius:</b> " + data.radius + " meter";
+
+                    "<b>Radius:</b> " +
+                    data.radius +
+                    " meter";
 
                 if (data.geo_ok) {{
 
                     html += `
+
                         <br><br>
 
-                        <h3>Ambil Selfie</h3>
+                        <h3>📸 Ambil Selfie</h3>
 
                         <input
                             type="file"
                             id="foto"
                             accept="image/*"
                             capture="user">
+
+                        <br><br>
+
+                        <button onclick="uploadPresensi()">
+                            Kirim Presensi
+                        </button>
+
                     `;
 
                 }}
 
-                document.getElementById("hasil").innerHTML = html;
+                document.getElementById(
+                    "hasil"
+                ).innerHTML = html;
 
             }})
 
             .catch(err => {{
 
-                document.getElementById("hasil").innerHTML =
+                document.getElementById(
+                    "hasil"
+                ).innerHTML =
                     "ERROR: " + err;
 
             }});
+
         }},
 
         function(err) {{
