@@ -16,6 +16,10 @@ from zoneinfo import ZoneInfo
 from uuid import uuid4
 import requests
 from fastapi.responses import FileResponse
+import pandas as pd
+import tempfile
+from openpyxl import load_workbook
+
 
 def ambil_pengaturan_geofencing():
     db = get_db_connection()
@@ -77,7 +81,7 @@ def hitung_jarak(
     delta_lambda = np.radians(
         lon_sekolah - longitude
     )
-
+    #Persamaan Haversine
     a = (
         np.sin(delta_phi / 2) ** 2
         + np.cos(phi1)
@@ -427,6 +431,99 @@ def get_all_siswa():
         cursor.close()
         conn.close()
 
+@app.get("/export-absensi")
+def export_absensi():
+
+    db = get_db_connection()
+
+    if not db:
+        raise HTTPException(
+            status_code=500,
+            detail="Gagal terhubung database"
+        )
+
+    try:
+
+        cursor = db.cursor(dictionary=True)
+
+        query = """
+            SELECT
+                c.waktu_absen,
+                s.nama,
+                s.kelas,
+                c.status_kehadiran,
+                c.jarak_geo,
+                c.distance
+            FROM catatan_kehadiran c
+            JOIN dataset_siswa s
+                ON c.id_siswa = s.id_siswa
+            ORDER BY c.waktu_absen DESC
+        """
+
+        cursor.execute(query)
+
+        data = cursor.fetchall()
+
+        if not data:
+            raise HTTPException(
+                status_code=404,
+                detail="Belum ada data presensi."
+            )
+
+        df = pd.DataFrame(data)
+
+        df.columns = [
+            "Waktu Presensi",
+            "Nama Siswa",
+            "Kelas",
+            "Status Kehadiran",
+            "Jarak Geofencing (m)",
+            "Cosine Distance"
+        ]
+
+        if "Waktu Presensi" in df.columns:
+            df["Waktu Presensi"] = pd.to_datetime(
+                df["Waktu Presensi"]
+            ).dt.strftime("%d-%m-%Y %H:%M:%S")
+
+        temp = tempfile.NamedTemporaryFile(
+            suffix=".xlsx",
+            delete=False
+        )
+
+        with pd.ExcelWriter(
+            temp.name,
+            engine="openpyxl"
+        ) as writer:
+
+            df.to_excel(
+                writer,
+                index=False,
+                sheet_name="Rekap Presensi"
+            )
+
+            ws = writer.sheets["Rekap Presensi"]
+
+            for col in ws.columns:
+                panjang = max(
+                    len(str(cell.value or ""))
+                    for cell in col
+                )
+
+                ws.column_dimensions[
+                    col[0].column_letter
+                ].width = panjang + 3
+
+        return FileResponse(
+            temp.name,
+            filename="Rekap_Absensi_Siswa.xlsx",
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+
+    finally:
+        cursor.close()
+        db.close()
+        
 @app.get("/geofencing")
 def get_geofencing():
     try:
