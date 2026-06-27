@@ -18,7 +18,7 @@ import requests
 from fastapi.responses import FileResponse
 import pandas as pd
 import tempfile
-from openpyxl import load_workbook
+
 
 
 def ambil_pengaturan_geofencing():
@@ -523,7 +523,7 @@ def export_absensi():
     finally:
         cursor.close()
         db.close()
-        
+
 @app.get("/geofencing")
 def get_geofencing():
     try:
