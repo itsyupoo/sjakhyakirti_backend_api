@@ -186,16 +186,14 @@ class AbsenEngine:
             return False, None
         
     def ekstrak_vektor_centroid(self, daftar_frame):
-        """
-        Menerima banyak frame (minimal 5), menghasilkan 1 centroid embedding.
-        """
+
         if len(daftar_frame) < 5:
             return False, None
 
         all_embeddings = []
 
         try:
-            for frame in daftar_frame:
+            for i, frame in enumerate(daftar_frame):
 
                 results = DeepFace.represent(
                     img_path=frame,
@@ -206,29 +204,25 @@ class AbsenEngine:
                 )
 
                 if len(results) == 0:
+                    print(f"❌ Foto {i+1} gagal dideteksi")
                     continue
 
-                # Ambil embedding wajah
-                embedding = results[0]["embedding"]
+                embedding = np.array(results[0]["embedding"], dtype=np.float32)
 
-                # Simpan ke list untuk dihitung centroid
+                print(f"✅ Foto {i+1} berhasil")
+                print(f"   Norm embedding = {np.linalg.norm(embedding):.4f}")
+
                 all_embeddings.append(embedding)
 
-            # Minimal 5 wajah berhasil diekstrak
+            print(f"Jumlah embedding valid = {len(all_embeddings)}")
+
             if len(all_embeddings) < 5:
                 return False, None
 
-            centroid = np.mean(
-                np.array(all_embeddings),
-                axis=0
-            )
-
-            return True, centroid.tolist()
+            # ===== DEBUG =====
+            print("⚠️ DEBUG: Menggunakan embedding foto pertama (bukan centroid)")
+            return True, all_embeddings[0].tolist()
 
         except Exception as e:
-            print(f"❌ API ENGINE: Gagal membuat centroid: {e}")
+            print(f"❌ API ENGINE: Gagal membuat embedding: {e}")
             return False, None
-        
-        except Exception as e:
-            print(f"❌ API ENGINE: Gagal membuat centroid: {e}")
-            return False, None    
