@@ -102,7 +102,6 @@ class AbsenEngine:
             return False, "SUDAH_ABSEN", 0, None
 
         try:
-            print("=== SEBELUM DEEPFACE ===")
             results = DeepFace.represent(
                 img_path = frame,
                 model_name = MODEL_NAME,
@@ -110,7 +109,7 @@ class AbsenEngine:
                 enforce_detection = True,
                 align = True
             )
-            print("=== SESUDAH DEEPFACE ===")
+            
             
             for res in results:
                 obj = res["facial_area"]
@@ -119,6 +118,9 @@ class AbsenEngine:
                 test_emb = np.array(res["embedding"]).reshape(1, -1)
                 test_emb = normalize(test_emb)
                 
+                print(f"Jumlah embedding : {len(self.known_embeddings)}")
+                print(f"Shape embedding  : {self.known_embeddings.shape}")
+
                 if len(self.known_embeddings) > 0:
                     similarity = np.dot(test_emb, self.known_embeddings.T)[0]
                     best_idx = np.argmax(similarity)
@@ -127,6 +129,14 @@ class AbsenEngine:
                     id_terdeteksi = self.known_ids[best_idx]
                     nama_db = self.known_names[best_idx]
                     
+                    # ===== DEBUG =====
+                    print("=" * 40)
+                    print(f"Target ID      : {target_id}")
+                    print(f"Detected ID    : {id_terdeteksi}")
+                    print(f"Detected Name  : {nama_db}")
+                    print(f"Similarity     : {similarity[best_idx]:.4f}")
+                    print(f"Distance       : {distance:.4f}")
+                    print("=" * 40)
                     # Logika Threshold ArcFace
                     if distance <= BEST_THRESHOLD:
                         if str(id_terdeteksi) == str(target_id):

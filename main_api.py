@@ -366,7 +366,7 @@ async def input_siswa_baru(
                 VALUES (NULL, %s, %s, %s, %s, %s, %s, %s, 'siswa')
             """
             
-            password_default = str(nis_siswa)
+            password_default = "sjakhyakirti2026"
 
             params = (
                 str(nis_siswa),
