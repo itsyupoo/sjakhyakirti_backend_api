@@ -76,10 +76,6 @@ class AbsenEngine:
                     
                     emb_np = np.array(embedding_list).astype('float32')
                 
-                    if str(id_s) == "66":
-                        print("DATABASE EMBEDDING")
-                        print(emb_np[:10])
-
                     if emb_np.shape == (512,):
                         self.known_ids.append(id_s)
                         self.known_names.append(nama)
