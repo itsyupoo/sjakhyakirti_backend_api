@@ -215,13 +215,8 @@ async def verify_presensi(
         os.makedirs("hasil_presensi", exist_ok=True)
 
         # Simpan foto
-        berhasil = cv2.imwrite(path_foto, img)
+        cv2.imwrite(path_foto, img)
 
-        # DEBUG
-        print("ABSOLUTE PATH :", os.path.abspath(path_foto))
-        print("PATH FOTO     :", path_foto)
-        print("BERHASIL      :", berhasil)
-        print("FILE ADA      :", os.path.exists(path_foto))
         foto_url = (
             f"https://sjakhyakirtibackendapi-production.up.railway.app/foto-presensi/{nama_file_hasil}"
         )
