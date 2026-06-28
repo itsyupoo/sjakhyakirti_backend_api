@@ -357,8 +357,13 @@ async def input_siswa_baru(
         cursor = db.cursor()
         
         try:
+            print("Enrollment embedding")
+            print(vektor_wajah[:10])
             # Ubah list vektor wajah menjadi string JSON
             vektor_string = json.dumps(vektor_wajah)
+
+            print("PANJANG EMBEDDING =", len(vektor_wajah))
+            print("10 nilai pertama =", vektor_wajah[:10])
             
             # id_siswa langsung diset NULL agar auto-increment berjalan sempurna
             sql = """
@@ -377,13 +382,17 @@ async def input_siswa_baru(
                 vektor_string,
                 password_default
             )
-            
+
             cursor.execute(sql, params)
             db.commit() 
+            print("INSERT BERHASIL")
+            print("LAST ID =", cursor.lastrowid)
             
             # Sinkronisasi instan RAM laptop dengan Cloud Railway
             engine.load_database_wajah()
-            
+            print("SETELAH LOAD DATABASE")
+            print("Jumlah wajah =", len(engine.known_ids))
+
         except Exception as db_err:
             db.rollback()
             return JSONResponse(status_code=400, content={"status": "gagal", "message": f"Gagal menyimpan ke database: {str(db_err)}"})
