@@ -359,6 +359,7 @@ async def input_siswa_baru(
         try:
             print("Enrollment embedding")
             print(vektor_wajah[:10])
+            print("Panjang =", len(vektor_wajah))
             # Ubah list vektor wajah menjadi string JSON
             vektor_string = json.dumps(vektor_wajah)
 
