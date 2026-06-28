@@ -124,6 +124,14 @@ class AbsenEngine:
                     
                     id_terdeteksi = self.known_ids[best_idx]
                     nama_db = self.known_names[best_idx]
+                    print("=" * 50)
+                    print("HASIL VERIFIKASI")
+                    print(f"Target ID      : {target_id}")
+                    print(f"Detected ID    : {id_terdeteksi}")
+                    print(f"Detected Name  : {nama_db}")
+                    print(f"Similarity     : {similarity[best_idx]:.4f}")
+                    print(f"Distance       : {distance:.4f}")
+                    print("=" * 50)
                     
                     # Logika Threshold ArcFace
                     if distance <= BEST_THRESHOLD:
