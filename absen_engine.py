@@ -212,8 +212,8 @@ class AbsenEngine:
         all_embeddings = []
 
         try:
-            for i, frame in daftar_frame:
-            
+            for frame in daftar_frame:
+
                 results = DeepFace.represent(
                     img_path=frame,
                     model_name=MODEL_NAME,
@@ -223,17 +223,11 @@ class AbsenEngine:
                 )
 
                 if len(results) == 0:
-                    print(f"Foto {i+1}: wajah tidak terdeteksi")
                     continue
-                print(f"Foto {i+1} facial_area:")
-                print(results[0]["facial_area"])
-                # Ambil embedding wajah
-                embedding = results[0]["embedding"]
 
-                # Simpan ke list untuk dihitung centroid
+                embedding = results[0]["embedding"]
                 all_embeddings.append(embedding)
 
-            # Minimal 5 wajah berhasil diekstrak
             if len(all_embeddings) < 5:
                 return False, None
 
@@ -246,8 +240,4 @@ class AbsenEngine:
 
         except Exception as e:
             print(f"❌ API ENGINE: Gagal membuat centroid: {e}")
-            return False, None
-        
-        except Exception as e:
-            print(f"❌ API ENGINE: Gagal membuat centroid: {e}")
-            return False, None    
+        return False, None
