@@ -109,9 +109,7 @@ class AbsenEngine:
                 enforce_detection = True,
                 align = True
             )
-
-            print(results[0]["facial_area"])
-            
+           
             for res in results:
                 obj = res["facial_area"]
                 x, y, w, h = obj['x'], obj['y'], obj['w'], obj['h']
@@ -119,37 +117,14 @@ class AbsenEngine:
                 test_emb = np.array(res["embedding"]).reshape(1, -1)
                 test_emb = normalize(test_emb)
 
-                print("VERIFY EMBEDDING")
-                print(test_emb[0][:10])
-                
-                print(f"Jumlah embedding : {len(self.known_embeddings)}")
-                print(f"Shape embedding  : {self.known_embeddings.shape}")
-
                 if len(self.known_embeddings) > 0:
                     similarity = np.dot(test_emb, self.known_embeddings.T)[0]
-                    for idx, sid in enumerate(self.known_ids):
-                        if str(sid) == str(target_id):
-                            print("=" * 40)
-                            print("HASIL TERHADAP AKUN SENDIRI")
-                            print(f"ID         : {sid}")
-                            print(f"Similarity : {similarity[idx]:.4f}")
-                            print(f"Distance   : {1 - similarity[idx]:.4f}")
-                            print("=" * 40)
-                            break
                     best_idx = np.argmax(similarity)
                     distance = float(1 - similarity[best_idx])
                     
                     id_terdeteksi = self.known_ids[best_idx]
                     nama_db = self.known_names[best_idx]
                     
-                    # ===== DEBUG =====
-                    print("=" * 40)
-                    print(f"Target ID      : {target_id}")
-                    print(f"Detected ID    : {id_terdeteksi}")
-                    print(f"Detected Name  : {nama_db}")
-                    print(f"Similarity     : {similarity[best_idx]:.4f}")
-                    print(f"Distance       : {distance:.4f}")
-                    print("=" * 40)
                     # Logika Threshold ArcFace
                     if distance <= BEST_THRESHOLD:
                         if str(id_terdeteksi) == str(target_id):
