@@ -123,6 +123,15 @@ class AbsenEngine:
 
                 if len(self.known_embeddings) > 0:
                     similarity = np.dot(test_emb, self.known_embeddings.T)[0]
+                    for idx, sid in enumerate(self.known_ids):
+                        if str(sid) == str(target_id):
+                            print("=" * 40)
+                            print("HASIL TERHADAP AKUN SENDIRI")
+                            print(f"ID         : {sid}")
+                            print(f"Similarity : {similarity[idx]:.4f}")
+                            print(f"Distance   : {1 - similarity[idx]:.4f}")
+                            print("=" * 40)
+                            break
                     best_idx = np.argmax(similarity)
                     distance = float(1 - similarity[best_idx])
                     
@@ -186,14 +195,16 @@ class AbsenEngine:
             return False, None
         
     def ekstrak_vektor_centroid(self, daftar_frame):
-
+        """
+        Menerima banyak frame (minimal 5), menghasilkan 1 centroid embedding.
+        """
         if len(daftar_frame) < 5:
             return False, None
 
         all_embeddings = []
 
         try:
-            for i, frame in enumerate(daftar_frame):
+            for frame in daftar_frame:
 
                 results = DeepFace.represent(
                     img_path=frame,
@@ -204,25 +215,29 @@ class AbsenEngine:
                 )
 
                 if len(results) == 0:
-                    print(f"❌ Foto {i+1} gagal dideteksi")
                     continue
 
-                embedding = np.array(results[0]["embedding"], dtype=np.float32)
+                # Ambil embedding wajah
+                embedding = results[0]["embedding"]
 
-                print(f"✅ Foto {i+1} berhasil")
-                print(f"   Norm embedding = {np.linalg.norm(embedding):.4f}")
-
+                # Simpan ke list untuk dihitung centroid
                 all_embeddings.append(embedding)
 
-            print(f"Jumlah embedding valid = {len(all_embeddings)}")
-
+            # Minimal 5 wajah berhasil diekstrak
             if len(all_embeddings) < 5:
                 return False, None
 
-            # ===== DEBUG =====
-            print("⚠️ DEBUG: Menggunakan embedding foto pertama (bukan centroid)")
-            return True, all_embeddings[0].tolist()
+            centroid = np.mean(
+                np.array(all_embeddings),
+                axis=0
+            )
+
+            return True, centroid.tolist()
 
         except Exception as e:
-            print(f"❌ API ENGINE: Gagal membuat embedding: {e}")
+            print(f"❌ API ENGINE: Gagal membuat centroid: {e}")
             return False, None
+        
+        except Exception as e:
+            print(f"❌ API ENGINE: Gagal membuat centroid: {e}")
+            return False, None    
