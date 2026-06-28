@@ -121,6 +121,9 @@ class AbsenEngine:
                 
                 test_emb = np.array(res["embedding"]).reshape(1, -1)
                 test_emb = normalize(test_emb)
+
+                print("VERIFY EMBEDDING")
+                print(test_emb[0][:10])
                 
                 print(f"Jumlah embedding : {len(self.known_embeddings)}")
                 print(f"Shape embedding  : {self.known_embeddings.shape}")
