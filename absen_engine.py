@@ -113,7 +113,8 @@ class AbsenEngine:
                 enforce_detection = True,
                 align = True
             )
-            
+
+            print(results[0]["facial_area"])
             
             for res in results:
                 obj = res["facial_area"]
@@ -211,8 +212,8 @@ class AbsenEngine:
         all_embeddings = []
 
         try:
-            for frame in daftar_frame:
-
+            for i, frame in daftar_frame:
+            
                 results = DeepFace.represent(
                     img_path=frame,
                     model_name=MODEL_NAME,
@@ -222,8 +223,10 @@ class AbsenEngine:
                 )
 
                 if len(results) == 0:
+                    print(f"Foto {i+1}: wajah tidak terdeteksi")
                     continue
-
+                print(f"Foto {i+1} facial_area:")
+                print(results[0]["facial_area"])
                 # Ambil embedding wajah
                 embedding = results[0]["embedding"]
 
